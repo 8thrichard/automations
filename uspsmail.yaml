@@ -1,0 +1,37 @@
+alias: Incoming Mail
+description: ""
+triggers:
+  - trigger: time
+    at: "10:00:00"
+conditions:
+  - condition: numeric_state
+    entity_id: sensor.mail_usps_mail
+    above: 0
+actions:
+  - action: camera.snapshot
+    metadata: {}
+    data:
+      filename: /config/www/USPSMail.jpg
+    target:
+      entity_id:
+        - camera.mail_usps_camera
+  - parallel:
+      - action: notify.yourphone
+        metadata: {}
+        data:
+          title: 📬 Mail Today
+          data:
+            image: https://url/local/USPSMail.jpg
+          message: >-
+            You have {{ states('sensor.mail_usps_mail') }} Mails coming in
+            today!
+      - action: notify.anotherdevice
+        metadata: {}
+        data:
+          title: 📬 Mail Today
+          data:
+            image: https://url/local/USPSMail.jpg
+          message: >-
+            You have {{ states('sensor.mail_usps_mail') }} Mails coming in
+            today!
+mode: single

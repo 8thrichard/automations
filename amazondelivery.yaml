@@ -1,0 +1,37 @@
+alias: Amazon Mail Delivery
+description: >-
+  Notifies household members when an Amazon package has been delivered and
+  captures a snapshot from the delivery camera
+triggers:
+  - trigger: numeric_state
+    entity_id:
+      - sensor.mail_amazon_packages_delivered
+    above: 0
+conditions: []
+actions:
+  - action: camera.snapshot
+    metadata: {}
+    data:
+      filename: /config/www/amazonmail.jpg
+    target:
+      entity_id: camera.mail_amazon_delivery_camera
+  - parallel:
+      - action: notify.yourphone
+        metadata: {}
+        data:
+          title: Amazon Package Delivered
+          data:
+            image: http://url/local/amazonmail.jpg
+          message: >-
+            You have {{ states('sensor.mail_amazon_packages_delivered') }}
+            Amazon package(s) delivered today!
+      - action: notify.anotherphone
+        metadata: {}
+        data:
+          title: Amazon Package Delivered
+          data:
+            image: http://url/local/amazonmail.jpg
+          message: >-
+            You have {{ states('sensor.mail_amazon_packages_delivered') }}
+            Amazon package(s) delivered today!
+mode: single
