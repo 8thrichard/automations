@@ -1,0 +1,75 @@
+alias: "Away Mode - Day "
+description: >
+  Turns off all lights when both Person Entity and Person Entity have been away from home for
+  5 minutes and sends a confirmation notification.
+triggers:
+  - entity_id:
+      - person.yourperson
+    to: not_home
+    for:
+      minutes: 5
+    trigger: state
+  - entity_id:
+      - person.yourperson
+    to: not_home
+    for:
+      minutes: 5
+    trigger: state
+conditions:
+  - condition: state
+    entity_id: person.yourperson
+    state: not_home
+    enabled: true
+  - condition: state
+    entity_id: person.yourperson
+    state: not_home
+    enabled: true
+  - condition: state
+    entity_id: input_boolean.guest_mode
+    state: "off"
+    enabled: true
+actions:
+  - action: script.turn_on
+    metadata: {}
+    data: {}
+    target:
+      entity_id: script.1744944185914
+  - action: light.turn_off
+    data: {}
+    target:
+      entity_id: light.all_lights
+      area_id:
+        - bathroom
+        - bedroom
+        - home_office
+        - kitchen
+        - living_room
+    enabled: true
+  - action: google_generative_ai_conversation.generate_content
+    metadata: {}
+    data:
+      prompt: >
+        Create a funny, short, and witty push notification for my smart home
+        automation. It should notify me that all lights are off, nobody is home,
+        and everything is in order. Include jokes about the current state of the
+        house (e.g., temperature, humidity) and make a playful reference to
+        Seinfeld or The Office. Keep it simple with no awkward punctuation or
+        AI-sounding phrasing. Limit to two lines MAX. For example, if it's too
+        humid, joke like 'Are Richard or Megan training for a swimming contest?'
+        and offer a lighthearted piece of advice.  dont show options, pick one
+        and show just the text with no punctuations esp * But be sure  to
+        confirm all lights and everything is turned off too
+            This is for the humidity in the House 
+
+                {{ states('sensor.livingroom_temperature_humidity')}} 
+
+                This is for the temperature in the house
+
+                {{ states('sensor.livingroom_temperature_temperature')}} 
+    response_variable: away
+  - action: script.new_script
+    metadata: {}
+    data:
+      title: Nobody Is Home!!
+      message: "{{ away.text }}"
+mode: single

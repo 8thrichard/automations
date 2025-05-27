@@ -1,0 +1,130 @@
+alias: Night Routine
+description: Automates the night routine triggered by a button press and hold.
+triggers:
+  - domain: mqtt
+    device_id: 42f0c1e9bbda73cc4d9a5ce10b511c09
+    type: action
+    subtype: 1_single
+    trigger: device
+    alias: Single Press of 1
+  - trigger: state
+    entity_id:
+      - input_boolean.sleeping
+    to: "on"
+    from: "off"
+conditions:
+  - condition: time
+    after: "20:00:00"
+    before: "00:00:00"
+actions:
+  - alias: Flash Lights
+    repeat:
+      count: 3
+      sequence:
+        - data:
+            rgb_color:
+              - 17
+              - 24
+              - 120
+            brightness_pct: 20
+          action: light.turn_on
+          target:
+            entity_id:
+              - light.sengled_bedroom_left
+              - light.sengled_bedroom_right
+        - delay: "00:00:01"
+        - action: light.turn_off
+          data: {}
+          target:
+            entity_id:
+              - light.sengled_bedroom_right
+              - light.sengled_bedroom_left
+        - delay: "00:00:01"
+    enabled: true
+  - parallel:
+      - action: input_boolean.turn_on
+        data: {}
+        target:
+          entity_id: input_boolean.motion_breaker_bedroom
+      - action: script.turn_on
+        metadata: {}
+        data: {}
+        target:
+          entity_id: script.1744944185914
+  - if:
+      - condition: state
+        entity_id: light.all_lights
+        state: "on"
+    then:
+      - action: light.turn_off
+        metadata: {}
+        data: {}
+        target:
+          entity_id: light.all_lights
+  - action: google_generative_ai_conversation.generate_content
+    metadata: {}
+    data:
+      prompt: |2-
+            Your output for this will be read out by a tts, and I am looking for the
+            most smoothest and human like sentences, so try to make it as easy for the
+            tts as possible; make sure you keep the entities as is, since Home assistant
+            will be reading them with an actual value. This message is going to be read
+            to me and my wife for a goodnight message. Try your best to be very funny,
+            we like almost all the characters on the Office Show, Especially  Michael
+            Scott and Dwight Schrute , Kevin, and all the major characters, so you can incorporate that. We 
+             also Love the Show Sienfeld - use different show joke everytime
+             My wife is a CNA so you can 
+            add funny jokes. Joke about farts too
+            Do not make it too long , make it one paragraph with max of 50 words but give it your best, make it very funny and simple avoid using “*”, add punctuations that
+            will add character to the tts: 
+               Richard and Megan,
+                      These are the things you need to know for tomorrow:
+                      
+                      For the weather:
+                      - Expect a high of {{ states('sensor.home_realfeel_temperature_max_day_1') | round }}° and a low of {{ states('sensor.home_realfeel_temperature_min_day_1') | round }}°.
+                      - There is a {{ states('sensor.home_thunderstorm_probability_day_1') }}% chance of a thunderstorm.
+                      - Wind speeds could reach up to {{ states('sensor.home_wind_speed_day_1') }} miles per hour.
+                      - The air quality will be {{ states('sensor.home_air_quality_day_1') }}.
+                      - Overall, the weather condition will be {{ states('sensor.home_condition_day_1') }}.
+                      
+                    Have a great night!
+    response_variable: response
+    enabled: true
+  - action: chime_tts.say
+    metadata: {}
+    data:
+      message: "\"{{ response.text }}\""
+      volume_level: 0.5
+      announce: true
+      voice: 5Q0t7uMcjvnagumLfvZi
+      tts_platform: tts.elevenlabs
+    target:
+      entity_id: media_player.bedroom_speaker
+    enabled: true
+  - type: turn_off
+    device_id: f6e62e4d38efd9f64f0fe9c02e95d002
+    entity_id: 02928c8875658774eed532ca8b10e9e1
+    domain: switch
+    alias: Turn off the Christmas light in the bedroom
+  - action: media_player.turn_off
+    metadata: {}
+    data: {}
+    target:
+      entity_id: media_player.bedroom_speaker
+  - wait_for_trigger:
+      - trigger: state
+        entity_id:
+          - media_player.bedroom_speaker
+        to: "off"
+    continue_on_timeout: true
+    timeout:
+      hours: 0
+      minutes: 0
+      seconds: 30
+      milliseconds: 0
+  - action: script.turn_on
+    metadata: {}
+    data: {}
+    target:
+      entity_id: script.sleeping_music
+mode: single

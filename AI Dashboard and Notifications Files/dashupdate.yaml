@@ -1,0 +1,192 @@
+alias: Dashboard Update Producation
+description: ""
+triggers:
+  - trigger: time_pattern
+    minutes: /5
+conditions: []
+actions:
+  - action: google_generative_ai_conversation.generate_content
+    metadata: {}
+    data:
+      prompt: >+
+
+        You are an hourly reporter for my home, your task is to check the status
+        of all the entities I will give you and produce a 2 sentence form
+        explanation of the shape my house is in, I want you to highlight any
+        critical thing that may need attention by enclosing just that part in **
+        Since it is a markdown language. On some days, let your response be 
+        simple and not too long, your output will be through a markdown so you
+        can keep that in mind for formatting- Since this is for a dashboard I
+        want to see the report and nothing  else from you like ”here is” use to
+        make important parts bold. max of 100 characters including space and not
+        more than that. avoid any short of punctuation including * - Make sure
+        output is not more than 100, if not, it will not show on the dashboard.
+        Only talk about trash if it is Saturday or Sunday - MAKE IT FUNNY.
+
+
+        Here are some of the entities I have
+
+
+        For my main door 
+
+        The Door’s Contact Sensor; off means it is closed, on means open
+
+        {{ states('binary_sensor.main_door_contact_sensor_contact')}} ,  
+
+        This detects if someone is tempering with the door. Off means it is
+        clear of tempering, On means tempering detected
+
+        {{ states('binary_sensor.main_door_contact_sensor_tamper')}}
+
+
+        For motion Sensors in the house; Off means no motion detected - Clear ; 
+        On means motion detected
+
+        Bedroom- {{ states('binary_sensor.bedroom_motion_sensor_occupancy')}} 
+
+        Kitchen- {{ states('binary_sensor.hallway_motion_sensor_occupancy')}} 
+
+        Bathroom- {{ states('binary_sensor.bathroom_motion_sensor_occupancy')}} 
+
+        Office-
+
+        {{ states('binary_sensor.home_office_motion_sensor_occupancy')}} 
+
+        Living room - {{
+        states('binary_sensor.mmwave_sensor_2e03f8_moving_target')}} or {{
+        states('binary_sensor.mmwave_sensor_2e03f8_presence')}}
+
+        For Motion Breaker Booleans - which I created and added to automations
+        as conditions, if they are on, that means the said room will not have
+        light come on and off automatically being triggered by motion sensor;
+        Ideally, they are supposed to be off, I turn them on, on occasions
+
+        Bathroom- {{ states('input_boolean.motion_breaker_bathroom')}} 
+
+        Bedroom- {{ states('input_boolean.motion_breaker_bedroom')}} 
+
+        Kitchen- {{ states('input_boolean.motion_breaker_kitchen')}} 
+
+        Office- {{ states('input_boolean.motion_breaker_office')}} 
+
+        Overall motion Breaker- {{
+        states('input_boolean.master_motion_breaker')}}  
+
+
+        For Climate - if the any are too low or too high 
+
+        This is for the humidity in the House
+
+        {{ states('sensor.livingroom_temperature_humidity')}} 
+
+        This is for the temperature in the house
+
+        {{ states('sensor.livingroom_temperature_temperature')}}
+
+
+
+        This is for the humidity in the Server Room 
+
+        {{ states('sensor.server_temperature_humidity')}} 
+
+        This is for the temperature in the Server Room
+
+        {{ states('sensor.server_temperature_temperature')}}
+
+
+
+        Electronics - Mainly for you to check if they are on (just on, idle or
+        playing) or off;
+
+        Kitchen Speaker- {{ states('media_player.kitchen_speaker')}} 
+
+        Bedroom Speaker- {{ states('media_player.bedroom_speaker')}} 
+
+        Bathroom Speaker- {{ states('media_player.bathroom_speaker')}} 
+
+        Living room Speaker- {{ states('media_player.nesthub7681')}} 
+
+        Gym Speaker- {{ states('media_player.gymspeaker')}} 
+
+        Main Samsung TV - {{ states('media_player.samsung_tv_65_media')}}
+
+        Xbox X - {{ states('media_player.richards_xbox')}}  
+
+
+
+        Booleans
+
+        Sleeping Mode - This indicates sleeping mode is on and so we are
+        sleeping {{ states('input_boolean.sleeping')}} 
+
+        Guest Mode - When it is on, it means we have a guest over and staying
+        with us - {{ states('input_boolean.guest_mode')}}
+
+        Trash Taken Out - When it is on, that means trash had been taken out for
+        pickup  {{states('input_boolean.trash_taken_out')}}
+
+
+
+        Backups for Truenas
+
+        These are the statuses of my backups and snapshots - any alarming ones
+        should be reported
+
+        {{ states('sensor.truenas_replication_nashomepool_full_disk')}}
+
+        {{ states('sensor.truenas_cloudsync_backup_to_mega_main')}}
+
+        {{ states('sensor.truenas_snapshot_tasks_nashomepool')}}
+
+        These entities provide the temperature of all the drives in my Truenas
+        {{ states('sensor.truenas_disks_sda')}} {{
+        states('sensor.truenas_disks_sdf')}} {{
+        states('sensor.truenas_disks_sdb')}} {{
+        states('sensor.truenas_disks_sdc')}} {{
+        states('sensor.truenas_disks_sde')}} {{
+        states('sensor.truenas_disks_sdd')}}
+
+
+        Lights -  This sensor indicates the number of nights On
+         {{ states('sensor.lights_on_counter')}}
+
+        Showeer - This sensor indicates if the shower is currently running or
+        not -- {{ states('binary_sensor.showering')}}
+
+        Sleep Mode - This sensor indicates whether we are asleep or not - on
+        means sleeping {{ states('input_boolean.sleeping')}}
+        input_boolean.sleeping
+
+        Trash - These two booleans are used to track if trash it taken out or if
+        I have been reminded if any of the two are On, that means trash is
+        either already taken out or I have been told to take it - {{
+        states('input_boolean.trash_reminder_sent')}} or {{
+        states('input_boolean.trash_taken_out')}}
+
+
+        MeTime - This boolean tracks to see if I - Richard, is either doing
+        school work, tinkering or doing something with hardware or servers; {{
+        states('input_boolean.metime')}}
+
+
+        Truenas Disk Health, Report if otherwise
+
+        The Backup Pool {{
+        states('binary_sensor.truenas_system_backup_healthy')}}
+
+        The Boot Pool
+
+        {{ states('binary_sensor.truenas_system_boot_pool_healthy')}}
+
+        The NasHomepool
+
+        {{ states('binary_sensor.truenas_system_nashomepool_healthy')}}
+
+    response_variable: dashboardup
+  - action: input_text.set_value
+    metadata: {}
+    data:
+      value: "{{ dashboardup.text }}"
+    target:
+      entity_id: input_text.dashboard_output
+mode: single
